@@ -114,10 +114,11 @@ var foundation_blue = "#008CBA",
          *  }
          *
          */
-        var data = commits,
+        var i = 10,
+            data = commits,//.slice(0, i),
             section = d3.select('.changes'),
             section_width = parseInt(section.style('width').substring(0, section.style('width').length - 2)),
-            chart, bar;
+            chart, bars, updateBars;
 
 
         chart = section.append('svg')
@@ -125,74 +126,165 @@ var foundation_blue = "#008CBA",
             .attr('height', 20 * data.length)
             .attr('class', 'chart');
 
-        bar = chart.selectAll('g')
-            .data(data);
+        updateBars = function () {
+            chart.attr('height', 20 * data.length);
 
-        bar.enter().append('g');
+            bars = chart.selectAll('g')
+                .data(data, function (d) { return d.hash });
 
-        bar.exit().remove();
+            bars.enter().append('g');
 
-        // update
+            bars.exit().remove();
 
-        bar.attr('class', 'bar')
-            .attr('transform', function (d, i) { return 'translate(0,' + i * 20 + ')' });
+            // update
 
-        bar.attr('class', 'bar')
-            .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
-        // insertions bar
-        bar.append('rect')
-            .attr('x', (section_width / 2))
-            .attr('height', 19)
-            .style('fill', foundation_blue)
-            .attr('width', 0)
-            .transition()
-            .delay(function (d, i) { return i * 50; })
-            .duration(function (d) { return d.summary.total_insertions; })
-            .attr('width', function (d) { return d.summary.total_insertions; });
+            bars.attr('class', 'bar')
+                .attr('transform', function (d, i) { return 'translate(0,' + i * 20 + ')' })
 
-        // deletions bar
-        bar.append('rect')
-            .attr('height', 19)
-            .attr('height', 19)
-            .style('fill', foundation_red)
-            .attr('width', 0)
-            .attr('x', section_width / 2)
-            .transition()
-            .delay(function (d, i) { return i * 50; })
-            .duration(function (d) { return d.summary.total_deletions; })
-            .attr('x', function (d) { return (section_width / 2) - d.summary.total_deletions; })
-            .attr('width', function (d) { return d.summary.total_deletions; });
+            // insertions bar
+            bars.append('rect')
+                .attr('x', (section_width / 2))
+                .attr('height', 19)
+                .style('fill', foundation_blue)
+                .attr('width', 0)
+                .transition()
+                .delay(function (d, i) { return i * 50; })
+                .duration(1000)
+                .attr('width', function (d) { return d.summary.total_insertions; })
 
-        // name bar
-        bar.append('text')
-            .attr('x', 50)
-            .attr('y', 10)
-            .attr('dy', '.35em')
-            .html(function(d) { // TODO: this is a hardlink to jquery's github page; maybe allow people to expand these to see per-commit changes
-                var hash_link = '<a href="https://www.github.com/jquery/jquery/commit/' + d.hash + '">' + d.hash.substr(0, 6) + '</a>';
+            // deletions bar
+            bars.append('rect')
+                .attr('height', 19)
+                .attr('height', 19)
+                .style('fill', foundation_red)
+                .attr('width', 0)
+                .attr('x', section_width / 2)
+                .transition()
+                .delay(function (d, i) { return i * 50; })
+                .duration(1000)
+                .attr('x', function (d) { return (section_width / 2) - d.summary.total_deletions; })
+                .attr('width', function (d) { return d.summary.total_deletions; });
 
-                return hash_link +' (' + d.author + ')';
+            // name bar
+            bars.append('text')
+                .attr('x', 50)
+                .attr('y', 10)
+                .attr('dy', '.35em')
+                .html(function(d) { // TODO: this is a hardlink to jquery's github page; maybe allow people to expand these to see per-commit changes
+                    var hash_link = '<a href="https://www.github.com/jquery/jquery/commit/' + d.hash + '">' + d.hash.substr(0, 6) + '</a>';
+
+                    return hash_link +' (' + d.author + ')';
+                })
+                .style('opacity', 0)
+                .transition()
+                .delay(function (d, i) { return i * 50; })
+                .duration(1000)
+                .style('opacity', 100);
+
+            // insertion count
+            bars.append('text')
+                .attr('x', (section_width / 2) + 50)
+                .attr('y', 10)
+                .attr('dy', '.35em')
+                .text(function (d) { return '(' + d.summary.total_insertions + ')'; })
+                .style('opacity', 0)
+                .transition()
+                .delay(function (d, i) { return i * 50; })
+                .duration(1000)
+                .style('opacity', 100);
+
+            // deletion count
+            bars.append('text')
+                .attr('x', (section_width / 2) - 50)
+                .attr('y', 10)
+                .attr('dy', '.35em')
+                .attr('text-anchor', 'end')
+                .text(function (d) { return '(' + d.summary.total_deletions + ')'; })
+                .style('opacity', 0)
+                .transition()
+                .delay(function (d, i) { return i * 50; })
+                .duration(1000)
+                .style('opacity', 100);
+
+
+//            d3.timer(function () {
+//                i += 10;
+//                data = commits.slice(0, i);
+//                updateBars();
+//                return true;
+//            }, 500)
+
+        };
+
+
+        updateBars();
+
+    },
+
+    drawCommitsFish = function (commits) {
+        /**
+         *  commit: {
+         *      author:  {string},
+         *      email:   {string},
+         *      files:   [{
+         *          changes: {number},
+         *          deletions: {number},
+         *          filename: {string},
+         *          insertions: {number}
+         *      }],
+         *      hash:    {string},
+         *      merge:   {
+         *          target: {string},
+         *          destination: {string}
+         *      } | undefined,
+         *      message: {string},
+         *      raw:     {Array},
+         *      summary: {
+         *          files_changed: {number},
+         *          total_deletions: {number},
+         *          total_insertions: {number}
+         *      },
+         *      timestamp: {Date}
+         *  }
+         *
+         */
+        var
+            section = d3.select('.changes'),
+            section_width = parseInt(section.style('width').substring(0, section.style('width').length - 2)),
+            chart, fish, addCommit, d3fish, commitNum, data;
+
+
+        chart = section.append('svg')
+            .attr('width', section_width)
+            .attr('height', 400)
+            .attr('class', 'fish');
+
+        fish = {};
+
+        commitNum = 1;
+        data = commits.slice(0, commitNum);
+
+        addCommit = function () {
+            data[commitNum - 1].files.each(function (file) {
+                if (fish.hasOwnProperty([file.filename])) {
+                    fish[file.filename] = 0;
+                }
+
+                fish[file.filename] += (file.insertions - file.deletions);
             });
 
-        // insertion count
-        bar.append('text')
-            .attr('x', (section_width / 2) + 50)
-            .attr('y', 10)
-            .attr('dy', '.35em')
-            .text(function (d) { return '(' + d.summary.total_insertions + ')'; });
+            d3fish = chart.selectAll('g')
+                .data(data, function (d) { return d.hash });
 
-        // deletion count
-        bar.append('text')
-            .attr('x', (section_width / 2) - 50)
-            .attr('y', 10)
-            .attr('dy', '.35em')
-            .attr('text-anchor', 'end')
-            .text(function (d) { return '(' + d.summary.total_deletions + ')'; });
+            d3fish.enter().append('g');
+
+            d3fish.exit().remove();
 
 
-        bar.transition()
-            .delay(750)
-            .each("start", function() { d3.select(this).attr('width', 0); });
+
+        };
+
+        addCommit();
     },
 
     parseCommits = function (data) {
@@ -346,6 +438,7 @@ var foundation_blue = "#008CBA",
             .text('Loading...')
             .click(function () {
                 drawCommitsGraph(commits);
+                $(this).prop('disabled', true);
             });
         $.ajax('jquery_git.txt', {
             success: function (data) {
