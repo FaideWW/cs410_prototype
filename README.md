@@ -1,29 +1,7 @@
-# Foundation Compass Template
+# CS410 d3 and git Demo/prototype
 
-The easiest way to get started with Foundation + Compass.
+To run, start an HTTP server in the root directory (where this file is located):
 
-## Requirements
-
-  * Ruby 1.9+
-  * [Node.js](http://nodejs.org)
-  * [compass](http://compass-style.org/): `gem install compass`
-  * [bower](http://bower.io): `npm install bower -g`
-
-## Quickstart
-
-  * [Download this starter compass project and unzip it](https://github.com/zurb/foundation-compass-template/archive/master.zip)
-  * Run `bower install` to install the latest version of Foundation
-  
-Then when you're working on your project, just run the following command:
-
-```bash
-compass watch
-```
-
-## Upgrading
-
-If you'd like to upgrade to a newer version of Foundation down the road just run:
-
-```bash
-bower update
-```
+    python3 -m http.server 8888
+    
+Then navigate to localhost:8888/ in your browser of choice
