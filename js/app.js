@@ -251,7 +251,8 @@ var foundation_blue = "#008CBA",
         var
             section = d3.select('.changes'),
             section_width = parseInt(section.style('width').substring(0, section.style('width').length - 2)),
-            chart, fish, addCommit, d3fish, commitNum, data;
+            chart, fish, addCommit, d3fish, data;
+
 
 
         chart = section.append('svg')
@@ -261,30 +262,45 @@ var foundation_blue = "#008CBA",
 
         fish = {};
 
-        commitNum = 1;
-        data = commits.slice(0, commitNum);
 
-        addCommit = function () {
-            data[commitNum - 1].files.each(function (file) {
-                if (fish.hasOwnProperty([file.filename])) {
-                    fish[file.filename] = 0;
+        addCommit = function (commit) {
+            commit.files.forEach(function (file) {
+                var insertions = file.insertions || 0,
+                    deletions  = file.deletions  || 0;
+                if (!fish.hasOwnProperty([file.filename])) {
+                    fish[file.filename] = {
+                        changes: [],
+                        total: 0
+                    };
                 }
 
-                fish[file.filename] += (file.insertions - file.deletions);
+                fish[file.filename].changes.push([commit.hash, insertions - deletions]);
+                fish[file.filename].total += (insertions - deletions);
+
+                if (fish[file.filename].total <= 0) {
+                    delete fish[file.filename];
+                }
             });
+//
+//            d3fish = chart.selectAll('g')
+//                .data(data, function (d) { return d.hash });
+//
+//            d3fish.enter().append('g');
+//
+//            d3fish.exit().remove();
 
-            d3fish = chart.selectAll('g')
-                .data(data, function (d) { return d.hash });
-
-            d3fish.enter().append('g');
-
-            d3fish.exit().remove();
-
-
-
+            return commit;
         };
 
-        addCommit();
+        console.log('starting...');
+        var timeBegin = new Date();
+
+        commits.forEach(addCommit);
+
+        var timeEnd = new Date();
+
+        console.log('done - took', (timeEnd - timeBegin), 'ms');
+        console.log(fish);
     },
 
     parseCommits = function (data) {
@@ -437,7 +453,9 @@ var foundation_blue = "#008CBA",
         $commits_button.prop('disabled', true)
             .text('Loading...')
             .click(function () {
-                drawCommitsGraph(commits);
+                //drawCommitsGraph(commits);
+                drawCommitsFish(commits);
+
                 $(this).prop('disabled', true);
             });
         $.ajax('jquery_git.txt', {
@@ -446,12 +464,10 @@ var foundation_blue = "#008CBA",
                     return (commit.summary &&
                         commit.summary.total_deletions !== undefined &&
                         commit.summary.total_insertions !== undefined);
-                }).sort(function (b, a) {
-                    return (a.summary.total_deletions + a.summary.total_insertions) -
-                        (b.summary.total_deletions + b.summary.total_insertions);
-                });
+                }).reverse();
+
                 $commits_button.prop('disabled', false)
-                    .text('Click to start');
+                    .text('Click to start (don\'t click this)');
             },
             error: function (err) {
                 console.error(err);
