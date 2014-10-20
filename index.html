@@ -1,29 +1,27 @@
 <!doctype html>
 <html class="no-js" lang="en">
-  <head>
+<head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Foundation</title>
+    <title>CS410</title>
     <link rel="stylesheet" href="stylesheets/app.css" />
     <script src="bower_components/modernizr/modernizr.js"></script>
     <script src="bower_components/d3/d3.min.js"></script>
     <script src="bower_components/x2js/xml2json.min.js"></script>
-  </head>
-  <body>
+</head>
+<body>
 
-    <header>
-        <h1>gitinspector + d3</h1>
-    </header>
+<section id="range">
+    <label for="min-commits" id="min-commits-value"></label>
+    <input type="range" id="min-commits" value="0" min="0" max="200"/>
+</section>
+<section id="loading">
+    <h1>Loading...</h1>
+</section>
 
-    <section class="changes">
-    </section>
-    <section class="commits">
-        <h2>Commits (by size)</h2>
-        <button id="commits"></button>
-    </section>
-
-    <script src="bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="bower_components/foundation/js/foundation.min.js"></script>
-    <script src="js/app.js"></script>
-  </body>
+<script src="bower_components/jquery/dist/jquery.min.js"></script>
+<script src="bower_components/foundation/js/foundation.min.js"></script>
+<script src="bower_components/d3-tip/index.js"></script>
+<script src="js/app.js"></script>
+</body>
 </html>

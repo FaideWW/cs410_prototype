@@ -327,8 +327,8 @@ jQuery.extend({
 
 		// Return, converting to number if forced or a qualifier was provided and val looks numeric
 		if ( extra === "" || extra ) {
-			num = parseFloat( val );
-			return extra === true || jQuery.isNumeric( num ) ? num || 0 : val;
+			num_commits = parseFloat( val );
+			return extra === true || jQuery.isNumeric( num_commits ) ? num_commits || 0 : val;
 		}
 		return val;
 	}

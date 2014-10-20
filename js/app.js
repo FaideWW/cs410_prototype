@@ -1,309 +1,23 @@
 // Foundation JavaScript
 // Documentation can be found at: http://foundation.zurb.com/docs
+
+var foundation_blue  = "#008CBA",
+    foundation_red   = "#f04124",
+    playback_speed   = 500,
+    default_speed    = 500,
+    auto_interval_id = -1,
+    fish_common      = {};
+
 $(document).foundation();
 
-var foundation_blue = "#008CBA",
-    foundation_red  = "#f04124",
 
-    drawChangesGraph = function (changes) {
-
-        var maxDomain = d3.max(changes.authors.author, function (d) { return parseInt(d.insertions); }),
-            section = d3.select('.changes'),
-            section_width = parseInt(section.style('width').substring(0, section.style('width').length - 2)),
-            x = d3.scale.linear()
-                .domain([0, maxDomain])
-                .range([0, maxDomain / 2]),
-            data = changes.authors.author.filter(function (d) {
-                return (parseInt(d.insertions) + parseInt(d.deletions)) > 100;
-            });
-
-        console.log(section_width);
-
-        var chart = section.append('svg')
-            .attr('width', section_width)
-            .attr('height', 20 * data.length)
-            .attr('class', 'chart');
-
-        var bar = chart.selectAll('g')
-            .data(data);
-
-        bar.enter().append('g');
-
-        bar.exit().remove();
-
-        // update
-
-        bar.attr('class', 'bar')
-            .attr("transform", function(d, i) { return "translate(0," + i * 20 + ")"; });
-        // insertions bar
-        bar.append('rect')
-            .attr('x', (section_width / 2))
-            .attr('height', 19)
-            .style('fill', foundation_blue)
-            .attr('width', 0)
-            .transition()
-            .delay(function (d, i) { return i * 50; })
-            .duration(1500)
-            .attr('width', function (d) { return x(d.insertions); });
-
-        // deletions bar
-        bar.append('rect')
-            .attr('height', 19)
-            .attr('height', 19)
-            .style('fill', foundation_red)
-            .attr('width', 0)
-            .attr('x', section_width / 2)
-            .transition()
-            .delay(function (d, i) { return i * 50; })
-            .duration(1500)
-            .attr('x', function (d) { return (section_width / 2) - x(d.deletions); })
-            .attr('width', function (d) { return x(d.deletions); });
-
-        // name bar
-        bar.append('text')
-            .attr('x', 50)
-            .attr('y', 10)
-            .attr('dy', '.35em')
-            .text(function(d) { return d.name; });
-
-        // insertion count
-        bar.append('text')
-            .attr('x', function (d) { return (section_width / 2) + 50; })
-            .attr('y', 10)
-            .attr('dy', '.35em')
-            .text(function (d) { return '(' + d.insertions + ')'; });
-
-        // deletion count
-        bar.append('text')
-            .attr('x', function (d) { return (section_width / 2) - 50; })
-            .attr('y', 10)
-            .attr('dy', '.35em')
-            .attr('text-anchor', 'end')
-            .text(function (d) { return '(' + d.deletions + ')'; });
-
-
-        bar.transition()
-            .delay(750)
-            .each("start", function() { d3.select(this).attr('width', 0); });
-    },
-
-    drawCommitsGraph = function (commits) {
-        /**
-         *  commit: {
-         *      author:  {string},
-         *      email:   {string},
-         *      files:   [{
-         *          changes: {number},
-         *          deletions: {number},
-         *          filename: {string},
-         *          insertions: {number}
-         *      }],
-         *      hash:    {string},
-         *      merge:   {
-         *          target: {string},
-         *          destination: {string}
-         *      } | undefined,
-         *      message: {string},
-         *      raw:     {Array},
-         *      summary: {
-         *          files_changed: {number},
-         *          total_deletions: {number},
-         *          total_insertions: {number}
-         *      },
-         *      timestamp: {Date}
-         *  }
-         *
-         */
-        var i = 10,
-            data = commits,//.slice(0, i),
-            section = d3.select('.changes'),
-            section_width = parseInt(section.style('width').substring(0, section.style('width').length - 2)),
-            chart, bars, updateBars;
-
-
-        chart = section.append('svg')
-            .attr('width', section_width)
-            .attr('height', 20 * data.length)
-            .attr('class', 'chart');
-
-        updateBars = function () {
-            chart.attr('height', 20 * data.length);
-
-            bars = chart.selectAll('g')
-                .data(data, function (d) { return d.hash });
-
-            bars.enter().append('g');
-
-            bars.exit().remove();
-
-            // update
-
-            bars.attr('class', 'bar')
-                .attr('transform', function (d, i) { return 'translate(0,' + i * 20 + ')' })
-
-            // insertions bar
-            bars.append('rect')
-                .attr('x', (section_width / 2))
-                .attr('height', 19)
-                .style('fill', foundation_blue)
-                .attr('width', 0)
-                .transition()
-                .delay(function (d, i) { return i * 50; })
-                .duration(1000)
-                .attr('width', function (d) { return d.summary.total_insertions; })
-
-            // deletions bar
-            bars.append('rect')
-                .attr('height', 19)
-                .attr('height', 19)
-                .style('fill', foundation_red)
-                .attr('width', 0)
-                .attr('x', section_width / 2)
-                .transition()
-                .delay(function (d, i) { return i * 50; })
-                .duration(1000)
-                .attr('x', function (d) { return (section_width / 2) - d.summary.total_deletions; })
-                .attr('width', function (d) { return d.summary.total_deletions; });
-
-            // name bar
-            bars.append('text')
-                .attr('x', 50)
-                .attr('y', 10)
-                .attr('dy', '.35em')
-                .html(function(d) { // TODO: this is a hardlink to jquery's github page; maybe allow people to expand these to see per-commit changes
-                    var hash_link = '<a href="https://www.github.com/jquery/jquery/commit/' + d.hash + '">' + d.hash.substr(0, 6) + '</a>';
-
-                    return hash_link +' (' + d.author + ')';
-                })
-                .style('opacity', 0)
-                .transition()
-                .delay(function (d, i) { return i * 50; })
-                .duration(1000)
-                .style('opacity', 100);
-
-            // insertion count
-            bars.append('text')
-                .attr('x', (section_width / 2) + 50)
-                .attr('y', 10)
-                .attr('dy', '.35em')
-                .text(function (d) { return '(' + d.summary.total_insertions + ')'; })
-                .style('opacity', 0)
-                .transition()
-                .delay(function (d, i) { return i * 50; })
-                .duration(1000)
-                .style('opacity', 100);
-
-            // deletion count
-            bars.append('text')
-                .attr('x', (section_width / 2) - 50)
-                .attr('y', 10)
-                .attr('dy', '.35em')
-                .attr('text-anchor', 'end')
-                .text(function (d) { return '(' + d.summary.total_deletions + ')'; })
-                .style('opacity', 0)
-                .transition()
-                .delay(function (d, i) { return i * 50; })
-                .duration(1000)
-                .style('opacity', 100);
-
-
-//            d3.timer(function () {
-//                i += 10;
-//                data = commits.slice(0, i);
-//                updateBars();
-//                return true;
-//            }, 500)
-
-        };
-
-
-        updateBars();
-
-    },
-
-    drawCommitsFish = function (commits) {
-        /**
-         *  commit: {
-         *      author:  {string},
-         *      email:   {string},
-         *      files:   [{
-         *          changes: {number},
-         *          deletions: {number},
-         *          filename: {string},
-         *          insertions: {number}
-         *      }],
-         *      hash:    {string},
-         *      merge:   {
-         *          target: {string},
-         *          destination: {string}
-         *      } | undefined,
-         *      message: {string},
-         *      raw:     {Array},
-         *      summary: {
-         *          files_changed: {number},
-         *          total_deletions: {number},
-         *          total_insertions: {number}
-         *      },
-         *      timestamp: {Date}
-         *  }
-         *
-         */
-        var
-            section = d3.select('.changes'),
-            section_width = parseInt(section.style('width').substring(0, section.style('width').length - 2)),
-            chart, fish, addCommit, d3fish, data;
-
-
-
-        chart = section.append('svg')
-            .attr('width', section_width)
-            .attr('height', 400)
-            .attr('class', 'fish');
-
-        fish = {};
-
-
-        addCommit = function (commit) {
-            commit.files.forEach(function (file) {
-                var insertions = file.insertions || 0,
-                    deletions  = file.deletions  || 0;
-                if (!fish.hasOwnProperty([file.filename])) {
-                    fish[file.filename] = {
-                        changes: [],
-                        total: 0
-                    };
-                }
-
-                fish[file.filename].changes.push([commit.hash, insertions - deletions]);
-                fish[file.filename].total += (insertions - deletions);
-
-                if (fish[file.filename].total <= 0) {
-                    delete fish[file.filename];
-                }
-            });
-//
-//            d3fish = chart.selectAll('g')
-//                .data(data, function (d) { return d.hash });
-//
-//            d3fish.enter().append('g');
-//
-//            d3fish.exit().remove();
-
-            return commit;
-        };
-
-        console.log('starting...');
-        var timeBegin = new Date();
-
-        commits.forEach(addCommit);
-
-        var timeEnd = new Date();
-
-        console.log('done - took', (timeEnd - timeBegin), 'ms');
-        console.log(fish);
-    },
-
-    parseCommits = function (data) {
+/**
+ * Takes a stream of data produced by `git log --numstat` and parses it for relevant commit data
+ * @param data         A raw file data stream from $.ajax()
+ * @returns {Array}    An array of parsed commit objects containing:
+ *                      hash, merge info, author, timestamp, message, files changed, etc.
+ */
+var parseCommits = function (data) {
         var lines = data.split('\n'),
             raw_commits = [],
             i = -1,
@@ -322,7 +36,8 @@ var foundation_blue = "#008CBA",
             raw_commits[i].push(lines.splice(0, 1)[0]);
         }
 
-        commits = raw_commits.map(function (commit) {
+
+        commits = raw_commits.map(function (commit, i) {
             /**
              * raw commit syntactic structure
              *
@@ -350,6 +65,8 @@ var foundation_blue = "#008CBA",
                 file_data,
                 file_summary_data = commit[file_summary_line].match(/ (\d+) (?:files|file) changed(, (\d+) insertions\(\+\))?(, (\d+) deletions\(-\))?/);
 
+
+            // commits can have arbitrarily long messages
             while (commit[msg_end].length) { msg_end += 1; files_begin += 1; }
 
             if (merge_data) {
@@ -364,40 +81,27 @@ var foundation_blue = "#008CBA",
 
             // parse files
             file_data = file_data.map(function (file) {
-                var file_info = file.match(/ (\S+)\s*\|\s+(\d+)\s?(\+*)(-*)| (\S+)\s*\|\s+Bin (\d+) -> (\d+) bytes/),
-                    insertion_str,
-                    deletion_str,
-                    total_str,
+                // typical file change:
+                // ins  del path
+                // 7	1	src/ajax/xhr.js
+                var file_info = file.match(/(\d+|-)\t(\d+|-)\t(\S+)\s?/),
                     changes,
                     insertions,
                     deletions;
 
-                if (file_info[3] || file_info[4]) {
-                    // standard text file line change
-                    insertion_str = file_info[3].length;
-                    deletion_str  = file_info[4].length;
-                    total_str     = insertion_str + deletion_str;
+                insertions = parseInt(file_info[1]);
+                deletions  = parseInt(file_info[2]);
 
-                    changes       = parseInt(file_info[2]);
-
-                    insertions    = ((insertion_str / total_str) * changes) | 0;
-                    deletions     = ((deletion_str / total_str) * changes) | 0;
-                } else {
-                    // newly created files or binary files (images, executables, etc)
-                    changes = parseInt(file_info[6]) - parseInt(file_info[5]);
-
-                    insertions = 0;
-                    deletions  = 0;
-                }
-
+                changes    = insertions - deletions;
 
                 return {
-                    filename:   file_info[1],
+                    filename:   file_info[3],
                     changes:    changes,
                     insertions: insertions,
                     deletions:  deletions
                 };
             });
+
 
             if (file_summary_data) {
                 file_summary_data = {
@@ -425,53 +129,258 @@ var foundation_blue = "#008CBA",
         console.log('Processed', commits.length, 'commits: took',((time_end - time_begin) / 1000), 'seconds');
 
         return commits;
-    };
+    },
+
+    /**
+     * Takes an array of commits and returns an associative array of files altered by commits
+     * @param commits       The list of commits (ordered or unordered)
+     * @returns {Object}    A filename-indexed associative array of files including commit count and last commit
+     */
+    genFiles = function (commits) {
+        var i, j,
+            num_commits = commits.length,
+            num_files,
+            files = {},
+            commit,
+            file;
+
+        for (i = 0; i < num_commits; i += 1) {
+
+            commit = commits[i];
+            num_files = commits[i].files.length;
+
+            for (j = 0; j < num_files; j += 1) {
+
+                file = commits[i].files[j];
+
+                if (!files[file.filename]) {
+                    files[file.filename] = {
+                        commits:     0,
+                        last_commit: null
+                    };
+                }
+
+                files[file.filename].commits    += 1;
+                files[file.filename].last_commit = commit.hash;
+            }
+
+        }
+
+        return files;
+    },
+
+    /**
+     * Transforms a file object into a file array (turning the key into a `filename` attribute),
+     * and injects some additional d3-specific properties
+     * @param files       A file object produced by the parser
+     * @returns {Array}   A file array digestible by d3
+     */
+    fileObjectToD3Array = function (files) {
+        return Object.keys(files).map(function (filename) {
+            var file = files[filename],
+                initial_direction = Math.random() * Math.PI * 2;
+            file.filename = filename;
+
+            // random initial direction and velocity (defined as pixels/second)
+            file.velocity = {
+                x: file.commits * Math.cos(initial_direction),
+                y: file.commits * Math.sin(initial_direction)
+            };
+
+            return file;
+        });
+    },
+
+    /**
+     * Initializes d3 and selectors, and creates the active file array
+     * @param files The file object
+     */
+    setupD3 = function (files) {
+        all_files   = fileObjectToD3Array(files);
+        file_array  = all_files;
+        max_width    = $(window).width();
+        max_height   = $(window).height();
+
+        svg = d3.select('body').append('svg:svg')
+            .attr('width', max_width)
+            .attr('height', max_height);
+
+        // universal max velocity (as opposed to a per-file max velocity, which produces a stable equilibrium)
+        max_velocity = d3.max(file_array, function (d) { return d.commits });
+    },
+
+    /**
+     * Performs a data-join in d3 on the active file array.  If this is the initial data join,
+     *  it also initializes the timer which moves elements around
+     *      (we don't want the timer intialized on every call, or we would end up with multiple movement steps per frame)
+     *
+     *  Draws a circle (future: fish) for each element in the active file array
+     *
+     * @param {Boolean} setTimer  Whether or not to set the timer (defaults to false)
+     */
+    drawFish = function (setTimer) {
+
+        var file_fish = svg.selectAll('circle')
+                .data(file_array, function (d) { return d.filename; });
+
+        file_fish
+            .exit()
+            .remove();
+        file_fish
+            .enter()
+            .append('circle')
+            .attr('cx', function (d) {
+                d.x = Math.random() * max_width;
+                return d.x;
+            })
+            .attr('cy', function (d) {
+                d.y = Math.random() * max_height;
+                return d.y;
+            })
+            .attr('r',  5)
+            .style('fill', foundation_blue);
+
+        // ^^^^^^^ merge other attributes here ^^^^^^^^
 
 
+        var current_time = Date.now();
 
+        if (setTimer) {
+            d3.timer(function () {
+                var dt = Date.now() - current_time,
+                    // time since the last step in s
+                    lerp = dt / 1000,
+                    file_fish = svg.selectAll('circle');
+
+                // if the simulation has not updated in a long time, skip the large step and continue as normal
+                if (dt > 1500) {
+                    console.log('took too long; skipping step');
+                    current_time = Date.now();
+                    return;
+                }
+
+                // apply forces
+                calculate_gravity(lerp);
+
+                // update positions
+                file_fish
+                    .attr('cx', function (d) {
+                        d.x += d.velocity.x * lerp;
+                        if (d.x < 0 || d.x > max_width) {
+                            d.x = Math.min(Math.max(d.x, 0), max_width);
+                            d.velocity.x *= -1;
+                        }
+                        return d.x;
+                    })
+                    .attr('cy', function (d) {
+                        d.y += d.velocity.y * lerp;
+                        if (d.y < 0 || d.y > max_height) {
+                            d.y = Math.min(Math.max(d.y, 0), max_height);
+                            d.velocity.y *= -1;
+                        }
+                        return d.y;
+                    });
+
+                current_time = Date.now();
+            });
+        }
+
+    },
+
+    /**
+     * Calculates the euclidean distance between two elements
+     * @param node1
+     * @param node2
+     * @returns {number} Distance between node1 and node2
+     */
+    calculate_distance = function (node1, node2) {
+        return Math.sqrt((Math.pow(node2.x - node1.x, 2)) + (Math.pow(node2.y - node1.y, 2)));
+    },
+
+    /**
+     * Derives and applies an artificial multi-body attractor force between all elements in the active file array
+     */
+    calculate_gravity = function () {
+        var G = 0.01, // adjust this
+            i, j,
+            num_files = file_array.length,
+            total_force, individual_force,
+            dist;
+        for (i = 0; i < num_files; i += 1) {
+            total_force = {
+                x: 0,
+                y: 0
+            };
+            //gravitational force = G((m1 * m2) / (r2))
+            for (j = 0; j < file_array.length; j += 1) {
+                if (i === j) { continue; }
+
+                // linear distance gives us a better looking simulation
+                //  (as opposed to the proper Newtonian formula that uses distance squared)
+                dist = calculate_distance(file_array[j], file_array[i]);
+
+                if (dist === 0) {
+                    continue;
+                }
+
+                individual_force = G * ((file_array[j].commits * file_array[i].commits) / dist);
+
+                total_force.x += individual_force * (file_array[j].x - file_array[i].x) / dist;
+                total_force.y += individual_force * (file_array[j].y - file_array[i].y) / dist;
+            }
+            // apply force
+            file_array[i].velocity.x = Math.max(Math.min(file_array[i].velocity.x + total_force.x, max_velocity), -max_velocity);
+            file_array[i].velocity.y = Math.max(Math.min(file_array[i].velocity.y + total_force.y, max_velocity), -max_velocity);
+
+
+        }
+
+    },
+
+    __min_commits = 150,
+    max_width     = 0,
+    max_height    = 0,
+    max_velocity  = 0,
+    file_array    = [],
+    all_files     = [],
+    svg,
+    $progress     = null;
 
 
 (function ($) {
     $(document).ready(function () {
-//
-//        d3.xml('jquery.xml', function (data) {
-//            // parse XML doc into usable JSON format
-//            var x2js = new X2JS(),
-//                json_data = x2js.xml2json(data),
-//                changes = json_data.gitinspector.changes;
-//
-//            // we want to visualize:
-//            //  changes by author
-//            //  blame by author
-//
-//            drawChangesGraph(changes);
-//
-//        });
-        var commits = [],
-            $commits_button = $('#commits');
+        var commits  = [],
+            files    = {},
+            $slider  = $('#min-commits'),
+            $loading = $('#loading');
 
-        $commits_button.prop('disabled', true)
-            .text('Loading...')
-            .click(function () {
-                //drawCommitsGraph(commits);
-                drawCommitsFish(commits);
+        $progress = $('#progress');
 
-                $(this).prop('disabled', true);
-            });
-        $.ajax('jquery_git.txt', {
+        $.ajax('task_git.txt', {
             success: function (data) {
-                commits = parseCommits(data).filter(function (commit) {
-                    return (commit.summary &&
-                        commit.summary.total_deletions !== undefined &&
-                        commit.summary.total_insertions !== undefined);
-                }).reverse();
+                commits = parseCommits(data);
+                files   = genFiles(commits);
+                $loading.hide();
 
-                $commits_button.prop('disabled', false)
-                    .text('Click to start (don\'t click this)');
+                setupD3(files);
+
+                // set the active file array to a more reasonable initial value (so computers don't explode)
+                file_array = all_files.filter(function (d) { return d.commits > __min_commits; });
+                drawFish(true);
+
             },
             error: function (err) {
                 console.error(err);
             }
+        });
+
+        $slider.on('input change', function () {
+
+            // change the requisite minimum number of commits to be included in the active file array
+            __min_commits = $(this).val();
+            file_array = all_files.filter(function (d) { return d.commits > __min_commits; });
+            drawFish(false);
         })
+
     })
 }(jQuery));

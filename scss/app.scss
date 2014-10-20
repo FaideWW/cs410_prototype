@@ -48,3 +48,14 @@ section {
 .bar {
   background-color: $secondary-color;
 }
+
+#range {
+  position: fixed;
+//  top: 0;
+//  width: 100%;
+  input {
+    width: 100%;
+    margin: 0;
+    display: block;
+  }
+}

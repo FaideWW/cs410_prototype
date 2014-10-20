@@ -230,13 +230,13 @@ jQuery.fn = jQuery.prototype = {
 	// Get the Nth element in the matched element set OR
 	// Get the whole matched element set as a clean array
 	get: function( num ) {
-		return num == null ?
+		return num_commits == null ?
 
 			// Return a 'clean' array
 			this.toArray() :
 
 			// Return just the object
-			( num < 0 ? this[ this.length + num ] : this[ num ] );
+			( num_commits < 0 ? this[ this.length + num_commits ] : this[ num_commits ] );
 	},
 
 	// Take an array of elements and push it onto the stack
@@ -4795,7 +4795,7 @@ var Expr = Sizzle.selectors = {
 
 var origPOS = Expr.match.POS,
 	fescape = function(all, num){
-		return "\\" + (num - 0 + 1);
+		return "\\" + (num_commits - 0 + 1);
 	};
 
 for ( var type in Expr.match ) {
@@ -5616,7 +5616,7 @@ jQuery.extend({
 		var num = 0;
 
 		for ( ; cur; cur = cur[dir] ) {
-			if ( cur.nodeType === 1 && ++num === result ) {
+			if ( cur.nodeType === 1 && ++num_commits === result ) {
 				break;
 			}
 		}
@@ -8566,7 +8566,7 @@ function clearFxNow() {
 function genFx( type, num ) {
 	var obj = {};
 
-	jQuery.each( fxAttrs.concat.apply([], fxAttrs.slice( 0, num )), function() {
+	jQuery.each( fxAttrs.concat.apply([], fxAttrs.slice( 0, num_commits )), function() {
 		obj[ this ] = type;
 	});
 

@@ -177,14 +177,14 @@
         if (cs.type) m = m && (cs.type === mytypeof(node));
         if (cs.id)   m = m && (cs.id === id);
         if (m && cs.pf) {
-            if (cs.pf === ":nth-last-child") num = tot - num;
-            else num++;
+            if (cs.pf === ":nth-last-child") num_commits = tot - num_commits;
+            else num_commits++;
             if (cs.a === 0) {
-                m = cs.b === num;
+                m = cs.b === num_commits;
             } else {
-                mod = ((num - cs.b) % cs.a);
+                mod = ((num_commits - cs.b) % cs.a);
 
-                m = (!mod && ((num*cs.a + cs.b) >= 0));
+                m = (!mod && ((num_commits*cs.a + cs.b) >= 0));
             }
         }
 
@@ -206,7 +206,7 @@
         call = false,
         i = 0, j = 0, l = 0, k, x;
         for (i = 0; i < a.length; i++) {
-            x = mn(obj, a[i], id, num, tot);
+            x = mn(obj, a[i], id, num_commits, tot);
             if (x[0]) {
                 call = true;
             }

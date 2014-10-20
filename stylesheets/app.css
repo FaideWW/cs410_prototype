@@ -9016,3 +9016,14 @@ section {
 .bar {
   background-color: #e7e7e7;
 }
+
+/* line 52, ../scss/app.scss */
+#range {
+  position: fixed;
+}
+/* line 56, ../scss/app.scss */
+#range input {
+  width: 100%;
+  margin: 0;
+  display: block;
+}

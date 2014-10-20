@@ -55,10 +55,10 @@ jQuery.fn = jQuery.prototype = {
 	// Get the Nth element in the matched element set OR
 	// Get the whole matched element set as a clean array
 	get: function( num ) {
-		return num != null ?
+		return num_commits != null ?
 
 			// Return just the one element from the set
-			( num < 0 ? this[ num + this.length ] : this[ num ] ) :
+			( num_commits < 0 ? this[ num_commits + this.length ] : this[ num_commits ] ) :
 
 			// Return all the elements in a clean array
 			slice.call( this );
