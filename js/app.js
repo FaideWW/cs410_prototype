@@ -153,15 +153,17 @@ var parseCommits = function (data) {
 
                 file = commits[i].files[j];
 
-                if (!files[file.filename]) {
-                    files[file.filename] = {
-                        commits:     0,
-                        last_commit: null
-                    };
-                }
+                if (file.filename.match(/\S.cpp/)) {
+                    if (!files[file.filename]) {
+                        files[file.filename] = {
+                            commits:     0,
+                            last_commit: null
+                        };
+                    }
 
-                files[file.filename].commits    += 1;
-                files[file.filename].last_commit = commit.hash;
+                    files[file.filename].commits    += 1;
+                    files[file.filename].last_commit = commit.hash;
+                }
             }
 
         }
@@ -301,7 +303,7 @@ var parseCommits = function (data) {
      * Derives and applies an artificial multi-body attractor force between all elements in the active file array
      */
     calculate_gravity = function () {
-        var G = 0.01, // adjust this
+        var G = 0.005, // adjust this
             i, j,
             num_files = file_array.length,
             total_force, individual_force,
